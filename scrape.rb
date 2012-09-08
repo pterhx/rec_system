@@ -17,7 +17,7 @@ end
 DB.create_table? :ratings do
   primary_key :id
   foreign_key :user_id, :users
-  foreign_key :anime_id, :animes
+  foreign_key :anime_id, :animes 
   unique [:user_id, :anime_id]
   integer :score
 end
