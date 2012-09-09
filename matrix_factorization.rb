@@ -1,3 +1,5 @@
+require 'matrix'
+
 def printMatrix m1
   m1.to_a.each {|r| puts r.inspect}
 end
@@ -27,6 +29,7 @@ def stepP(matrixP, matrixQ, eui, u, i, k, alpha, beta)
 end
 
 def matrix_factorization(matrixR, matrixP0, matrixQ0, sizeK, alpha=0.0002, beta=0.02, delta=0.001)
+  puts "Start matrix_factorization"
   matrixP = matrixP0
   matrixQ = matrixQ0
   newR = matrixP * matrixQ
@@ -46,18 +49,9 @@ def matrix_factorization(matrixR, matrixP0, matrixQ0, sizeK, alpha=0.0002, beta=
     end
     matrixP = Matrix.rows(newPArr)
     matrixQ = Matrix.rows(newQArr)
-    puts "matrixP: "
-    printMatrix matrixP
-    puts "matrixQ: "
-    printMatrix matrixQ
     newR = matrixP * matrixQ
-    puts "matrixR: "
-    printMatrix matrixR
-    puts "newR: " 
-    printMatrix newR
     newTotalE = getRMSE(matrixR, matrixP, matrixQ, sizeK, beta)
-    puts ("totalE - newTotalE: " + totalE.to_s + " - " + newTotalE.to_s + " = " + (totalE - newTotalE).to_s)
-    puts "========================"
+    puts "Delta: #{totalE - newTotalE}"
   end while totalE - newTotalE > delta
   return newR
 end
