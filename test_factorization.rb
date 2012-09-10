@@ -1,17 +1,19 @@
+require 'rubygems'
 require 'sequel'
 require_relative 'matrix_factorization'
 require 'matrix'
+require 'benchmark'
 
 def printMatrix m1
   m1.to_a.each {|r| puts r.inspect}
 end
 
-DB = Sequel.sqlite('MAL.db')
+DB = Sequel.connect('jdbc:sqlite:MAL.db')
 
-NUM_USERS = 500
-NUM_ANIMES = 500
-NUM_REMOVED = 100
-K = 100
+NUM_USERS = 30
+NUM_ANIMES = 30
+NUM_REMOVED = 10
+K = 10
 
 users = DB[:users].first(NUM_USERS).map{|r| r[:id]}
 animes = DB[:animes].first(NUM_ANIMES).map{|r| r[:id]}
@@ -33,25 +35,34 @@ for i in 0...NUM_REMOVED
     rating = ratings.sample
   end
   removed[i] = rating
-  p "Removed #{rating}"
   arrR[rating[0] - 1][rating[1] - 1] = 0
 end
 
-puts "Converting matrixP0"
-arrP0 = Array.new(NUM_USERS) {Array.new(K) {1}}
+arrP0 = Array.new(NUM_USERS) {Array.new(K) {0.5}}
 matrixP0 = Matrix.rows(arrP0)
-puts "Converting matrixQ0"
-arrQ0 = Array.new(K) {Array.new(NUM_ANIMES) {1}}
+arrQ0 = Array.new(K) {Array.new(NUM_ANIMES) {0.5}}
 matrixQ0 = Matrix.rows(arrQ0)
-puts "Converting matrixR"
 matrixR = Matrix.rows(arrR)
 
-estimatedR = matrix_factorization(matrixR, matrixP0, matrixQ0, K)
-
-removed.each do |rating|
-  user, anime, scorew = rating
-  puts "User: #{user}, Anime: #{anime}"
-  estimatedScore = estimatedR[user, anime]
-  puts "Estimated: #{estimatedScore}"
-  puts "Actual: #{score}"
+estimatedR = nil
+time = Benchmark.realtime do
+  estimatedR = matrix_factorization(matrixR, matrixP0, matrixQ0, K)
 end
+puts "============= RESULTS ============="
+puts "Factorization took #{time*1000} milliseconds"
+puts "================ R ================"
+printMatrix matrixR
+puts "=============== eR ================"
+printMatrix estimatedR
+puts "============== Stats =============="
+diff = 0
+removed.each do |rating|
+  user, anime, score = rating
+  puts "User: #{user}, Anime: #{anime}"
+  estimatedScore = estimatedR[user-1, anime-1]
+  puts "Estimated:\t #{estimatedScore}"
+  puts "Actual: \t #{score}"
+  diff += (estimatedScore - score).abs
+  puts "==============j"
+end
+puts "Average difference: #{diff / NUM_REMOVED}"

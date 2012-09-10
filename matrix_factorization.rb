@@ -28,7 +28,7 @@ def stepP(matrixP, matrixQ, eui, u, i, k, alpha, beta)
   matrixP[u][k] + alpha * (2 * eui * matrixQ[k][i]  - beta * matrixP[u][k])
 end
 
-def matrix_factorization(matrixR, matrixP0, matrixQ0, sizeK, alpha=0.0002, beta=0.02, delta=0.001)
+def matrix_factorization(matrixR, matrixP0, matrixQ0, sizeK, alpha=0.001, beta=0.02, delta=0.0005)
   puts "Start matrix_factorization"
   matrixP = matrixP0
   matrixQ = matrixQ0
@@ -47,11 +47,12 @@ def matrix_factorization(matrixR, matrixP0, matrixQ0, sizeK, alpha=0.0002, beta=
         newQArr[k][i] = stepQ(newPArr, newQArr, eui, u, i, k, alpha, beta)
       end
     end
+
     matrixP = Matrix.rows(newPArr)
     matrixQ = Matrix.rows(newQArr)
     newR = matrixP * matrixQ
     newTotalE = getRMSE(matrixR, matrixP, matrixQ, sizeK, beta)
-    puts "Delta: #{totalE - newTotalE}"
+    # puts "Delta: #{totalE - newTotalE}"
   end while totalE - newTotalE > delta
   return newR
 end
