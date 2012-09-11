@@ -65,10 +65,10 @@ arrQ0 = Array.new(K) {Array.new(NUM_ANIMES) {Random.rand}}
 matrixQ0 = Matrix.rows(arrQ0)
 matrixR = Matrix.rows(arrR)
 
-estimatedR = nil
 time = Benchmark.realtime do
-  estimatedR = matrix_factorization(matrixR, matrixP0, matrixQ0, K)
+  P,Q = matrix_factorization(matrixR, K)
 end
+estimatedR = P*Q
 
 
 puts "============= RESULTS ============="
