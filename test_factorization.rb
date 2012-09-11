@@ -8,7 +8,7 @@ require 'benchmark'
 NUM_USERS = 30
 NUM_ANIMES = 30
 NUM_REMOVED = 10
-K = 10
+K = 20
 MIN_ANIMES = 50
 MIN_USERS = 100
 
