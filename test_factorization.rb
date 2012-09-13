@@ -8,12 +8,12 @@ require 'benchmark'
 NUM_USERS = 30
 NUM_ANIMES = 30
 NUM_REMOVED = 10
-K = 20
+K = 10
 MIN_ANIMES = 50
 MIN_USERS = 100
 
 # Retrieve users, animes, and ratings
-DB = Sequel.connect('jdbc:sqlite:MAL.db')
+DB = Sequel.sqlite('MAL.db')
 
 usersDS = DB[:users]
 animesDS = DB[:animes]
