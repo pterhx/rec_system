@@ -15,11 +15,12 @@ ratingsDS = DB[:ratings]
 animesDS = DB[:animes]
 correlationsDS = DB[:correlations]
 
-firstAnimeId = correlationsDS.order(:id).last[:anime1_id]
+firstAnimeId = correlationsDS.order(:id).last[:anime2_id]
 lastAnimeId = animesDS.order(:id).last[:id]
 
 for anime in firstAnimeId..lastAnimeId
   for otherAnime in (anime + 1)..lastAnimeId
+    puts "corr(#{anime}, #{otherAnime})" 
     next unless correlationsDS.filter(:anime1_id => anime, :anime2_id => otherAnime).empty?
     usersSeenAnime2 = ratingsDS.select(:user_id).filter(:anime_id => otherAnime)
     users = ratingsDS.filter(:anime_id=> anime,:user_id => usersSeenAnime2).select(:user_id)
@@ -32,7 +33,7 @@ for anime in firstAnimeId..lastAnimeId
     end
     correlation = GSL::Stats::correlation(GSL::Vector.alloc(animeRatings),GSL::Vector.alloc(otherAnimeRatings))
     next if correlation.nan?
-    puts "corr(#{anime}, #{otherAnime}) = #{correlation}"
+    puts "#{correlation}"
     correlationsDS.insert(:anime1_id => anime, :anime2_id => otherAnime, :correlation => correlation, :num_users => users.count)
     correlationsDS.insert(:anime1_id => otherAnime, :anime2_id => anime, :correlation => correlation, :num_users => users.count)
   end
