@@ -15,20 +15,19 @@ def userRatings(userId)
   return ratings
 end
 
-def regularize(correlation, numUsers)
-  ((numUsers * correlation) / (numUsers + BETA)) ** ALPHA
+def regularize(correlation, numUsers, alpha, beta)
+  ((numUsers * correlation) / (numUsers + beta)) ** alpha
 end
 
-def getNeighbors(ratings, animeId)
-
+def getNeighbors(ratings, animeId, min_users, k)
   # grab all the correlations for animdId
   correlationsDS = DB[:correlations]
-  filteredCorrelationsDS = correlationsDS.filter("anime1_id = #{animeId} AND num_users > #{MIN_USERS}") 
+  filteredCorrelationsDS = correlationsDS.filter("anime1_id = #{animeId} AND num_users > #{min_users}") 
   correlations = filteredCorrelationsDS.map {|r| r}
   # keep animes seen by user
   correlations.select! {|correlation| ratings.key? correlation[:anime2_id]}
   onlyCorrelations = correlations.map {|correlation| correlation[:correlation]}
-  num = [K, correlations.size].min
+  num = [k, correlations.size].min
   # keep largest num indices
   neighborIndices = GSL::Vector.alloc(onlyCorrelations).sort_largest_index(num)
   neighbors = Array.new
@@ -38,23 +37,23 @@ def getNeighbors(ratings, animeId)
     correlation = correlationData[:correlation]
     numUsers = correlationData[:num_users]
     otherAnimeId = correlationData[:anime2_id]
-    neighbors << {:correlation => regularize(correlation, numUsers), :animeId => otherAnimeId}
+    neighbors << {:correlation => correlation, :numUsers => numUsers, :animeId => otherAnimeId}
   end
   return neighbors
 end
 
-def predict(userId, animeId)
+def predict(userId, animeId, alpha, beta, gamma, k, min_users)
   ratings = userRatings(userId)
   p ratings
-  neighbors = getNeighbors(ratings, animeId)
-  p neighbors
-  totalCorrelationSum = neighbors.map {|neighbor| neighbor[:correlation]}.reduce(:+)
-  puts totalCorrelationSum
+  neighbors = getNeighbors(ratings, animeId, min_users, k)
+  totalCorrelationSum = 0
   subPrediction = neighbors.map do |neighbor|
-    neighbor[:correlation] / (GAMMA + totalCorrelationSum) * ratings[neighbor[:animeId]] 
+    regularizedCorrelation = regularize(neighbor[:correlation], neighbor[:numUsers], alpha, beta)
+    totalCorrelationSum += regularizedCorrelation
+    regularizedCorrelation * ratings[neighbor[:animeId]] 
   end
   puts subPrediction
-  return subPrediction.reduce(:+)
+  return subPrediction.reduce(:+) / (gamma + totalCorrelationSum)  
 end
 
 def recommend()
