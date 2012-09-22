@@ -11,7 +11,9 @@ MIN_USERS = 40
 def userRatings(userId) 
   ratingsDS = DB[:ratings]
   ratings = {}
-  ratingsDS.filter(:user_id => userId).each{|rating| ratings[rating[:anime_id]] = rating[:score]}
+  ratingsDS.filter(:user_id => userId).each do |rating| 
+    ratings[rating[:anime_id]] = rating[:score]
+  end
   return ratings
 end
 
@@ -22,7 +24,11 @@ end
 def getNeighbors(ratings, animeId, min_users, k)
   # grab all the correlations for animdId
   correlationsDS = DB[:correlations]
-  filteredCorrelationsDS = correlationsDS.filter("anime1_id = #{animeId} AND num_users > #{min_users}") 
+  filterString = "anime1_id = #{animeId} AND num_users > #{min_users}" 
+  filteredCorrelationsDS = correlationsDS.filter(filterString) 
+  if filteredCorrelationsDS.empty?
+    return nil
+  end
   correlations = filteredCorrelationsDS.map {|r| r}
   # keep animes seen by user
   correlations.select! {|correlation| ratings.key? correlation[:anime2_id]}
@@ -44,15 +50,16 @@ end
 
 def predict(userId, animeId, alpha, beta, gamma, k, min_users)
   ratings = userRatings(userId)
-  p ratings
   neighbors = getNeighbors(ratings, animeId, min_users, k)
+  if neighbors.nil? 
+    return -1
+  end
   totalCorrelationSum = 0
   subPrediction = neighbors.map do |neighbor|
     regularizedCorrelation = regularize(neighbor[:correlation], neighbor[:numUsers], alpha, beta)
     totalCorrelationSum += regularizedCorrelation
     regularizedCorrelation * ratings[neighbor[:animeId]] 
   end
-  puts subPrediction
   return subPrediction.reduce(:+) / (gamma + totalCorrelationSum)  
 end
 
