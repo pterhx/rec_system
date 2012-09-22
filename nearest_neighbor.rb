@@ -34,6 +34,9 @@ def getNeighbors(ratings, animeId, min_users, k)
   correlations.select! {|correlation| ratings.key? correlation[:anime2_id]}
   onlyCorrelations = correlations.map {|correlation| correlation[:correlation]}
   num = [k, correlations.size].min
+  if num <= 0
+    return nil
+  end
   # keep largest num indices
   neighborIndices = GSL::Vector.alloc(onlyCorrelations).sort_largest_index(num)
   neighbors = Array.new
