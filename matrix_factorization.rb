@@ -1,10 +1,10 @@
 require 'matrix'
 
 # Parameters
-ALPHAP = 0.005
-ALPHAPB = 0.005
-ALPHAQ = 0.005
-ALPHAQB = 0.005
+ALPHAP = 0.002
+ALPHAPB = 0.002
+ALPHAQ = 0.002
+ALPHAQB = 0.002
 
 BETAP = 0.02
 BETAPB = 0.02
@@ -71,14 +71,21 @@ def getRMSE(matrixR, arrP, arrQ, sizeK)
   return rmse
 end
 
-# Factors R into P and Q. Uses gradient descent to determine P and Q.
+# Factors R = P * Q, where P is a matrix that represents the latent factors
+# a user likes and Q represents the latent factors that a movie possesses.
+# Uses gradient descent to determine P and Q.
 def matrix_factorization(matrixR, sizeK, delta=0.000001)
-  # Initial guess for P,Q
+  # Our initial guesses for P and Q are just small random doubles
   arrP = Array.new(matrixR.row_size) {Array.new(sizeK) {Random.rand / 2}}
-  arrP = arrP.map {|r| r[0] = 1; r}
   arrQ = Array.new(sizeK) {Array.new(matrixR.column_size) {Random.rand / 2}}
+ 
+  # Fix first column of P and first row of Q to be 1
+  arrP = arrP.map {|r| r[0] = 1; r}
   arrQ[1] = Array.new(matrixR.column_size) {1}
+
+  # Calculate the initial RMSE
   newRmse = getRMSE(matrixR, arrP, arrQ, sizeK)
+
   begin
     rmse = newRmse
     matrixR.each_with_index do |r, u, i|
